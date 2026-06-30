@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import Image from 'next/image';
-import { IllustracionCamino } from '@/components/ui/Illustrations';
 
 interface Props {
   onContinuar: () => void;
@@ -57,8 +56,6 @@ export default function PantallaBienvenida({ onContinuar }: Props) {
           <p className="font-body text-ivory/50 text-[15px] max-w-[320px] mx-auto leading-[1.8]">
             Antes de comenzar, necesito conocerte. No para juzgarte. Para diseñar tu camino.
           </p>
-          {/* Ilustración de camino — visual del viaje que comienza */}
-          <IllustracionCamino className="w-full max-w-[280px] mx-auto opacity-60 mt-2 rounded-xl overflow-hidden" />
         </div>
 
         {/* Progress dots — Stitch style: primera posición activa */}
