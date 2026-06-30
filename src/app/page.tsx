@@ -2,9 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { getUsuario } from '@/lib/db';
+import { GUIA_INSTALACION_KEY } from '@/components/instalacion/GuiaInstalacion';
 
-// Lazy imports para cada sección
 import dynamic from 'next/dynamic';
+
+const GuiaInstalacion = dynamic(() => import('@/components/instalacion/GuiaInstalacion'), {
+  loading: () => <SplashScreen />,
+});
 
 const Onboarding = dynamic(() => import('@/components/onboarding/Onboarding'), {
   loading: () => <SplashScreen />,
@@ -29,27 +33,57 @@ function SplashScreen() {
   );
 }
 
+type Estado = 'loading' | 'instalacion' | 'onboarding' | 'dashboard';
+
+async function resolverDestino(): Promise<'onboarding' | 'dashboard'> {
+  try {
+    const usuario = await getUsuario();
+    return usuario?.onboardingCompleto ? 'dashboard' : 'onboarding';
+  } catch {
+    return 'onboarding';
+  }
+}
+
+function esPWAInstalada(): boolean {
+  if (typeof window === 'undefined') return true; // SSR: skip guide
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    // iOS Safari standalone property
+    (window.navigator as unknown as Record<string, unknown>)['standalone'] === true
+  );
+}
+
+function guiaYaVista(): boolean {
+  try {
+    return !!localStorage.getItem(GUIA_INSTALACION_KEY);
+  } catch {
+    return true; // Si localStorage no está disponible, no mostramos la guía
+  }
+}
+
 export default function Home() {
-  const [estado, setEstado] = useState<'loading' | 'onboarding' | 'dashboard'>('loading');
+  const [estado, setEstado] = useState<Estado>('loading');
 
   useEffect(() => {
-    async function verificarUsuario() {
-      try {
-        const usuario = await getUsuario();
-        if (usuario?.onboardingCompleto) {
-          setEstado('dashboard');
-        } else {
-          setEstado('onboarding');
-        }
-      } catch {
-        // Si IndexedDB no está disponible, iniciar onboarding
-        setEstado('onboarding');
+    async function inicializar() {
+      // Si ya está instalada como PWA o el usuario ya vio la guía, saltar
+      if (esPWAInstalada() || guiaYaVista()) {
+        const destino = await resolverDestino();
+        setEstado(destino);
+      } else {
+        setEstado('instalacion');
       }
     }
-    verificarUsuario();
+    inicializar();
   }, []);
 
+  const procederDesdeInstalacion = async () => {
+    const destino = await resolverDestino();
+    setEstado(destino);
+  };
+
   if (estado === 'loading') return <SplashScreen />;
+  if (estado === 'instalacion') return <GuiaInstalacion onContinuar={procederDesdeInstalacion} />;
   if (estado === 'onboarding') return <Onboarding onComplete={() => setEstado('dashboard')} />;
   return <Dashboard />;
 }
