@@ -74,6 +74,22 @@ export async function ritualCompletadoHoy(): Promise<boolean> {
   return !!dia;
 }
 
+/** Marcar la lectura del día como completada */
+export async function marcarLecturaLeida(): Promise<void> {
+  const hoy = new Date().toISOString().split('T')[0];
+  const dia = await getDiaPorFecha(hoy);
+  if (dia?.id) {
+    await db.diasCompletados.update(dia.id, { lecturaLeida: true });
+  }
+}
+
+/** Verificar si la lectura de hoy fue completada */
+export async function lecturaLeidaHoy(): Promise<boolean> {
+  const hoy = new Date().toISOString().split('T')[0];
+  const dia = await getDiaPorFecha(hoy);
+  return !!(dia as DiaCompletado & { lecturaLeida?: boolean })?.lecturaLeida;
+}
+
 /** Marcar la lección del día como leída */
 export async function marcarLeccionLeida(): Promise<void> {
   const hoy = new Date().toISOString().split('T')[0];

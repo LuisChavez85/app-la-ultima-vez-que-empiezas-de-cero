@@ -52,6 +52,7 @@ export interface DiaCompletado {
   microvictoriasCompletadas: number; // 0-5
   horaCompletado: string; // ISO datetime
   leccionLeida: boolean;
+  lecturaLeida?: boolean;
   gratitud?: string;
 }
 
@@ -130,6 +131,18 @@ export interface MicroLeccion {
   contenido: string;
   semana: number;
   tematica: string;
+}
+
+// --- Lectura diaria (~5 min) ---
+export interface LecturaDiaria {
+  dia: number;
+  semana: number;
+  tematica: string;
+  titulo: string;
+  categoria: 'Lectura' | 'Historia de Espejo';
+  contenido: string; // párrafos separados por \n\n
+  preguntaIncomoda: string;
+  microEjercicio: string;
 }
 
 // --- Declaración diaria ---

@@ -5,15 +5,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   getUsuario, ritualCompletadoHoy,
   getHorasDesdeUltimaActividad, reflexionExiste,
+  lecturaLeidaHoy,
 } from '@/lib/db';
 import { mensajesRacha, hitos } from '@/data/constantes';
 import { lecciones } from '@/data/lecciones';
+import { lecturasDiarias } from '@/data/lecturas';
 import { getColorsPorRacha } from '@/data/constantes';
 import type { Usuario, SeccionApp } from '@/types';
 import {
   Home, Link2, BarChart3, Settings, Zap, LifeBuoy,
   ArrowRight, Shield, Target, CheckCircle, ChevronRight,
-  Sparkles, RotateCcw, CalendarDays, Trophy,
+  Sparkles, RotateCcw, CalendarDays, Trophy, BookOpen,
 } from 'lucide-react';
 import RitualDiario from '@/components/modules/RitualDiario';
 import MicroLeccion from '@/components/modules/MicroLeccion';
@@ -26,6 +28,7 @@ import AntiRecaida from '@/components/modules/AntiRecaida';
 import ReinicioMental from '@/components/modules/ReinicioMental';
 import ReflexionSemanal from '@/components/modules/ReflexionSemanal';
 import CeremoniaD30 from '@/components/modules/CeremoniaD30';
+import LecturaDiariaComponent from '@/components/lecturas/LecturaDiaria';
 import MilestoneToast from '@/components/ui/MilestoneToast';
 import SOSButton from '@/components/ui/SOSButton';
 import { IllustracionMontana, DecoradorLinea } from '@/components/ui/Illustrations';
@@ -63,17 +66,20 @@ export default function Dashboard() {
   const [mostrarReinicio, setMostrarReinicio] = useState(false);
   const [mostrarReflexion, setMostrarReflexion] = useState(false);
   const [mostrarCeremonia, setMostrarCeremonia] = useState(false);
+  const [mostrarLectura, setMostrarLectura] = useState(false);
   const [leccionLeida, setLeccionLeida] = useState(false);
+  const [lecturaLeidaState, setLecturaLeidaState] = useState(false);
   const [reflexionPendiente, setReflexionPendiente] = useState(false);
   const [ceremoniaPendiente, setCeremoniaPendiente] = useState(false);
   const [milestoneRacha, setMilestoneRacha] = useState<number | null>(null);
   const rachaAnterior = useRef<number>(0);
 
   const cargarDatos = useCallback(async () => {
-    const [u, hecho, horas] = await Promise.all([
+    const [u, hecho, horas, lecturaLeida_] = await Promise.all([
       getUsuario(),
       ritualCompletadoHoy(),
       getHorasDesdeUltimaActividad(),
+      lecturaLeidaHoy(),
     ]);
 
     if (u) {
@@ -102,6 +108,7 @@ export default function Dashboard() {
 
     setRitualHecho(hecho);
     setHorasDesdeUltima(horas);
+    setLecturaLeidaState(!!lecturaLeida_);
   }, []);
 
   useEffect(() => { cargarDatos(); }, [cargarDatos]);
@@ -110,6 +117,7 @@ export default function Dashboard() {
   const diaDelPrograma = Math.min(racha + 1, 30);
   const semanaActual = Math.ceil(diaDelPrograma / 7);
   const leccionHoy = lecciones.find((l) => l.dia === diaDelPrograma);
+  const lecturaHoy = lecturasDiarias.find((l) => l.dia === diaDelPrograma);
   const colors = getColorsPorRacha(racha);
 
   const horaActual = new Date().getHours();
@@ -189,6 +197,10 @@ export default function Dashboard() {
   );
   if (mostrarCeremonia) return (
     <CeremoniaD30 usuario={usuario} onComplete={() => { setMostrarCeremonia(false); cargarDatos(); }} />
+  );
+  if (mostrarLectura && lecturaHoy) return (
+    <LecturaDiariaComponent lectura={lecturaHoy} diaDelPrograma={diaDelPrograma}
+      onComplete={() => { setMostrarLectura(false); setLecturaLeidaState(true); cargarDatos(); }} />
   );
 
   // Módulos con nav preservada
@@ -491,6 +503,31 @@ export default function Dashboard() {
               </div>
               <h3 className="font-display italic text-base text-ivory mb-1.5">{leccionHoy.titulo}</h3>
               <p className="text-sm text-ivory/40 leading-relaxed line-clamp-2">{leccionHoy.contenido}</p>
+            </motion.button>
+          )}
+
+          {/* Lectura del Día */}
+          {lecturaHoy && (
+            <motion.button custom={5.5} variants={cardVariants} initial="hidden" animate="visible"
+              onClick={() => setMostrarLectura(true)}
+              whileTap={{ scale: 0.97 }}
+              className="w-full card mb-5 text-left group"
+              style={{ boxShadow: '0 0 16px rgba(200, 164, 78, 0.03)' }}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-md bg-gold/10 flex items-center justify-center">
+                    <BookOpen className="w-3.5 h-3.5 text-gold/70" />
+                  </div>
+                  <p className="text-label">Lectura del Día {lecturaHoy.dia}</p>
+                </div>
+                {lecturaLeidaState
+                  ? <span className="text-[10px] text-emerald font-body">✓ Leída</span>
+                  : <ArrowRight className="w-3.5 h-3.5 text-gold/50" />}
+              </div>
+              <h3 className="font-display italic text-base text-ivory mb-1.5">{lecturaHoy.titulo}</h3>
+              <p className="text-xs text-ivory/30 font-body">
+                {lecturaHoy.categoria} · 5 min · {lecturaHoy.tematica}
+              </p>
             </motion.button>
           )}
 

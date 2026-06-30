@@ -46,3 +46,5 @@ stitch_extracted/
 
 # Claude Code internal
 .claude/
+
+.vercel

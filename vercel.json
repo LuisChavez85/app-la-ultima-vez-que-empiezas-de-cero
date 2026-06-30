@@ -1,0 +1,6 @@
+{
+  "name": "app-la-ultima-vez-que-empiezas-de-cero",
+  "buildCommand": "next build",
+  "outputDirectory": ".next",
+  "framework": "nextjs"
+}
